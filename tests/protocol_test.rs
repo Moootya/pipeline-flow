@@ -37,6 +37,22 @@ impl Node for SecondNode {
 }
 
 
+struct ThirdNode {}
+
+#[async_trait]
+impl Node for ThirdNode {
+    fn get_name(&self) -> &'static str { "second-example-id" }
+    fn get_verbose_name(&self) -> &'static str { "second-example-name" }
+
+    type Input = (as_output!(FirstNode), as_output!(SecondNode));
+    type Output = u32;
+
+    async fn process(&self, input: Self::Input) -> Self::Output {
+        return input.0 + input.1 + 1
+    }
+}
+
+
 #[tokio::test]
 async fn test_node_impl() {
 
@@ -61,8 +77,8 @@ async fn test_node_connection() {
     let second_node = SecondNode{};
     let second_node_result = second_node.process(first_node_result).await;
 
-    assert_eq!(second_node_result, 124);
+    let third_node = ThirdNode{};
+    let third_node_result = third_node.process((first_node_result, second_node_result)).await;
 
-    assert_eq!(second_node.get_name(), "second-example-id");
-    assert_eq!(second_node.get_verbose_name(), "second-example-name");
+    assert_eq!(third_node_result, 248);
 }
